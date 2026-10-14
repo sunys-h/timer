@@ -183,7 +183,19 @@ function plan(){
 
 /* sound */
 let ac=null;
-function initAudio(){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}catch(e){}}
+// マナーモードでも鳴らす：音声を「メディア再生」として扱わせる
+let keepAlive=null;
+function silentWav(){const n=8000,b=new ArrayBuffer(44+n),v=new DataView(b),w=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};
+  w(0,'RIFF');v.setUint32(4,36+n,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,8000,true);v.setUint32(28,8000,true);v.setUint16(32,1,true);v.setUint16(34,8,true);w(36,'data');v.setUint32(40,n,true);
+  for(let i=0;i<n;i++)v.setUint8(44+i,128);return URL.createObjectURL(new Blob([b],{type:'audio/wav'}))}
+function initAudio(){
+  try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}
+  try{if(!keepAlive){keepAlive=new Audio(silentWav());keepAlive.loop=true;keepAlive.setAttribute('playsinline','')}
+    const p=keepAlive.play();if(p&&p.catch)p.catch(()=>{})}catch(e){}
+  try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}catch(e){}
+}
+function releaseAudio(){try{keepAlive&&keepAlive.pause()}catch(e){}}
 function tone(f,d,len,vol=.25,type='square'){if(!ac)return;const t=ac.currentTime+d,o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=f;
   g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.008);g.gain.setValueAtTime(vol,t+len-.02);g.gain.linearRampToValueAtTime(0,t+len);o.connect(g).connect(ac.destination);o.start(t);o.stop(t+len+.02)}
 const SND={
@@ -216,7 +228,7 @@ function enter(i){
 function finish(){
   R.seq=[];$('run').className='done';$('rPhase').textContent='おつかれさま';$('rTime').textContent='✓';
   $('rNext').textContent='合計 '+mmss(plan().reduce((a,s)=>a+s.dur,0));$('rBar').style.width='100%';
-  $('bPause').textContent='設定に戻る';$('bSkip').disabled=true;SND.done();say('おつかれさまでした');unlock();
+  $('bPause').textContent='設定に戻る';$('bSkip').disabled=true;SND.done();say('おつかれさまでした');unlock();setTimeout(releaseAudio,4000);
 }
 function draw(){
   const s=R.seq[R.i];if(!s)return;
@@ -248,7 +260,7 @@ function start(){
   $('setup').hidden=true;$('run').hidden=false;$('bSkip').disabled=false;
   lock();enter(0);cancelAnimationFrame(R.raf);R.raf=requestAnimationFrame(frame);
 }
-function stop(){cancelAnimationFrame(R.raf);R.seq=[];unlock();try{speechSynthesis.cancel()}catch(e){}$('run').hidden=true;$('setup').hidden=false}
+function stop(){cancelAnimationFrame(R.raf);R.seq=[];unlock();releaseAudio();try{speechSynthesis.cancel()}catch(e){}$('run').hidden=true;$('setup').hidden=false}
 
 $('go').onclick=start;
 $('bPause').onclick=()=>{
