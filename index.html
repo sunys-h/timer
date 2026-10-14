@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>バドミントン練習タイマー</title>
+<meta name="theme-color" content="#1f7a4c">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="練習タイマー">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Barlow+Condensed:wght@500;700&display=swap">
+<style>
+/* Layout: setup screen of steppers → full-bleed run screen whose whole background is the phase color, readable from across the court. */
+:root{
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#eef1ec; --surface:#ffffff; --ink:#18221d; --muted:#61706a; --line:#d3dad5;
+  --work:#1f7a4c; --rest:#2b5ea8; --prep:#c9851b; --setrest:#6b4fa0; --done:#18221d; --on-phase:#ffffff;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --f-num:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121815; --surface:#1b2420; --ink:#e7ede9; --muted:#95a49d; --line:#2c3833;
+  --work:#1e8a55; --rest:#2f66b6; --prep:#c98a22; --setrest:#7458ad; --done:#0c110f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121815; --surface:#1b2420; --ink:#e7ede9; --muted:#95a49d; --line:#2c3833;
+  --work:#1e8a55; --rest:#2f66b6; --prep:#c98a22; --setrest:#7458ad; --done:#0c110f; color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+button{font-family:inherit}
+button:focus-visible{outline:3px solid var(--prep);outline-offset:2px}
+
+/* setup */
+#setup{max-width:460px;margin:0 auto;box-sizing:border-box;padding-block:20px 28px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:18px}
+h1{font:900 22px var(--f-body);margin:0;letter-spacing:.02em}
+.presets{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.presets button{flex:none;font:500 13px var(--f-body);color:var(--ink);background:var(--surface);border:1px solid var(--line);
+  border-radius:999px;padding:8px 14px;cursor:pointer;white-space:nowrap}
+.presets button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.item{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;padding:12px 14px;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.dot{width:10px;height:10px;border-radius:50%}
+.lbl{display:flex;flex-direction:column;min-width:0}
+.lbl b{font-size:16px;font-weight:700}
+.lbl small{font-size:12px;color:var(--muted)}
+.step{display:flex;align-items:center;gap:6px}
+.step button{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:700 22px var(--f-body);cursor:pointer;
+  -webkit-user-select:none;user-select:none}
+.step button:active{transform:scale(.95)}
+.val{min-width:70px;text-align:center;font:700 26px var(--f-num);font-variant-numeric:tabular-nums}
+.opts{display:flex;flex-direction:column;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:4px 14px}
+.opt{display:flex;justify-content:space-between;align-items:center;padding:10px 0;font-size:15px;cursor:pointer}
+.opt+.opt{border-top:1px solid var(--line)}
+.opt input{width:22px;height:22px;accent-color:var(--work)}
+.total{display:flex;justify-content:space-between;align-items:baseline;color:var(--muted);font-size:14px;padding-inline:4px}
+.total b{font:700 30px var(--f-num);color:var(--ink);font-variant-numeric:tabular-nums}
+.go{font:900 20px var(--f-body);letter-spacing:.1em;color:#fff;background:var(--work);border:0;border-radius:18px;padding:20px 0;cursor:pointer}
+
+/* run */
+#run{position:fixed;inset:0;background:var(--prep);color:var(--on-phase);display:flex;flex-direction:column;
+  padding-top:calc(16px + env(safe-area-inset-top,0px));padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  box-sizing:border-box;transition:background-color .25s}
+#run.work{background:var(--work)} #run.rest{background:var(--rest)} #run.setrest{background:var(--setrest)} #run.done{background:var(--done)}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.counter{display:flex;flex-direction:column;gap:2px}
+.counter span{font-size:12px;letter-spacing:.14em;opacity:.8}
+.counter b{font:700 34px/1 var(--f-num);font-variant-numeric:tabular-nums}
+.counter b small{font-size:.55em;opacity:.7}
+.center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:0}
+.phase{font:900 clamp(32px,10vw,56px)/1 var(--f-body);letter-spacing:.12em}
+.big{font:700 clamp(150px,52vw,300px)/.9 var(--f-num);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.next{font-size:15px;opacity:.85;min-height:1.4em}
+.bar{height:8px;border-radius:4px;background:rgba(255,255,255,.25);overflow:hidden;margin-bottom:16px}
+.bar i{display:block;height:100%;width:0;background:#fff}
+.rbtns{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:10px}
+.rbtns button{font:700 16px var(--f-body);border-radius:16px;padding:18px 0;cursor:pointer;border:2px solid rgba(255,255,255,.55);background:transparent;color:#fff}
+.rbtns button.main{background:#fff;color:var(--ink);border-color:#fff;font-size:18px}
+#run.paused .big{opacity:.45}
+@media (prefers-reduced-motion:reduce){#run{transition:none}}
+</style>
+</head>
+<body>
+
+
+<section id="setup">
+  <h1>バドミントン練習タイマー</h1>
+  <div class="presets" id="presets"></div>
+  <div class="list" id="list"></div>
+  <div class="opts">
+    <label class="opt" for="optVoice">音声で読み上げ（スタート・休憩など）<input type="checkbox" id="optVoice" checked></label>
+    <label class="opt" for="optHalf">ワークの半分で合図<input type="checkbox" id="optHalf"></label>
+  </div>
+  <div class="total"><span>合計時間</span><b id="total">0:00</b></div>
+  <button class="go" id="go">スタート</button>
+</section>
+
+<section id="run" hidden>
+  <div class="top">
+    <div class="counter"><span>ROUND</span><b id="rRound">1<small>/8</small></b></div>
+    <div class="counter" id="setBox" style="text-align:right"><span>SET</span><b id="rSet">1<small>/1</small></b></div>
+  </div>
+  <div class="center">
+    <div class="phase" id="rPhase">準備</div>
+    <div class="big" id="rTime">10</div>
+    <div class="next" id="rNext"></div>
+  </div>
+  <div class="bar"><i id="rBar"></i></div>
+  <div class="rbtns">
+    <button id="bStop">終了</button>
+    <button class="main" id="bPause">一時停止</button>
+    <button id="bSkip">次へ ›</button>
+  </div>
+</section>
+
+<script>
+const $=id=>document.getElementById(id);
+const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+
+const FIELDS=[
+  {k:'prep',name:'準備',sub:'始まる前のカウント',color:'--prep',min:0,max:60,step:5,time:true},
+  {k:'work',name:'ワーク',sub:'動く時間',color:'--work',min:5,max:600,step:5,time:true},
+  {k:'rest',name:'休憩',sub:'ラウンド間の休み',color:'--rest',min:0,max:600,step:5,time:true},
+  {k:'rounds',name:'ラウンド数',sub:'ワーク＋休憩の回数',color:'--ink',min:1,max:50,step:1},
+  {k:'sets',name:'セット数',sub:'上をくり返す回数',color:'--ink',min:1,max:10,step:1},
+  {k:'setRest',name:'セット間休憩',sub:'セットの合間の長い休み',color:'--setrest',min:0,max:900,step:15,time:true},
+];
+const PRESETS=[
+  {name:'フットワーク',v:{prep:10,work:30,rest:30,rounds:10,sets:1,setRest:60}},
+  {name:'タバタ',v:{prep:10,work:20,rest:10,rounds:8,sets:1,setRest:60}},
+  {name:'ノック練習',v:{prep:10,work:45,rest:15,rounds:8,sets:2,setRest:120}},
+  {name:'シャトルラン',v:{prep:10,work:40,rest:20,rounds:6,sets:3,setRest:90}},
+  {name:'ゲーム形式',v:{prep:10,work:300,rest:60,rounds:4,sets:1,setRest:60}},
+];
+let cfg=Object.assign({},PRESETS[0].v,store.get('bt.cfg')||{});
+
+const mmss=s=>{s=Math.max(0,Math.round(s));const m=Math.floor(s/60);return m+':'+String(s%60).padStart(2,'0')};
+const fmtVal=(f,v)=>f.time?(v<60?v+'秒':mmss(v)):v+(f.k==='rounds'?'回':'セット');
+
+function buildSetup(){
+  $('presets').innerHTML=PRESETS.map((p,i)=>`<button data-i="${i}">${p.name}</button>`).join('');
+  $('presets').querySelectorAll('button').forEach(b=>b.onclick=()=>{cfg=Object.assign({},PRESETS[b.dataset.i].v);save()});
+  $('list').innerHTML=FIELDS.map(f=>`<div class="item" id="it-${f.k}">
+    <span class="dot" style="background:var(${f.color})"></span>
+    <div class="lbl"><b>${f.name}</b><small>${f.sub}</small></div>
+    <div class="step"><button data-k="${f.k}" data-d="-1" aria-label="${f.name}を減らす">−</button><span class="val" id="v-${f.k}"></span><button data-k="${f.k}" data-d="1" aria-label="${f.name}を増やす">＋</button></div></div>`).join('');
+  $('list').querySelectorAll('.step button').forEach(b=>{
+    let t1,t2;const f=FIELDS.find(x=>x.k===b.dataset.k),d=+b.dataset.d;
+    const once=()=>{cfg[f.k]=Math.max(f.min,Math.min(f.max,cfg[f.k]+d*f.step));save()};
+    b.addEventListener('pointerdown',e=>{e.preventDefault();once();t1=setTimeout(function r(){once();t2=setTimeout(r,90)},400)});
+    ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>{clearTimeout(t1);clearTimeout(t2)}));
+    b.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();once()}});
+  });
+  const o=store.get('bt.opts')||{};if('voice' in o)$('optVoice').checked=o.voice;if('half' in o)$('optHalf').checked=o.half;
+  ['optVoice','optHalf'].forEach(id=>$(id).onchange=()=>store.set('bt.opts',{voice:$('optVoice').checked,half:$('optHalf').checked}));
+  save();
+}
+function save(){
+  store.set('bt.cfg',cfg);
+  FIELDS.forEach(f=>$('v-'+f.k).textContent=fmtVal(f,cfg[f.k]));
+  $('it-setRest').style.opacity=cfg.sets>1?1:.4;
+  $('presets').querySelectorAll('button').forEach((b,i)=>b.classList.toggle('on',FIELDS.every(f=>PRESETS[i].v[f.k]===cfg[f.k])));
+  $('total').textContent=mmss(plan().reduce((a,s)=>a+s.dur,0));
+}
+function plan(){
+  const seq=[];if(cfg.prep)seq.push({type:'prep',dur:cfg.prep,round:1,set:1});
+  for(let s=1;s<=cfg.sets;s++){for(let r=1;r<=cfg.rounds;r++){
+    seq.push({type:'work',dur:cfg.work,round:r,set:s});
+    if(r<cfg.rounds&&cfg.rest)seq.push({type:'rest',dur:cfg.rest,round:r,set:s});}
+    if(s<cfg.sets&&cfg.setRest)seq.push({type:'setrest',dur:cfg.setRest,round:cfg.rounds,set:s});}
+  return seq;
+}
+
+/* sound */
+let ac=null;
+function initAudio(){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}catch(e){}}
+function tone(f,d,len,vol=.25,type='square'){if(!ac)return;const t=ac.currentTime+d,o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=f;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.008);g.gain.setValueAtTime(vol,t+len-.02);g.gain.linearRampToValueAtTime(0,t+len);o.connect(g).connect(ac.destination);o.start(t);o.stop(t+len+.02)}
+const SND={
+  tick:()=>tone(1000,0,.09,.2),
+  work:()=>tone(1500,0,.6,.3),
+  rest:()=>{tone(1200,0,.15);tone(800,.18,.3)},
+  half:()=>{tone(1300,0,.08,.2);tone(1300,.14,.08,.2)},
+  done:()=>[0,.2,.4,.7].forEach((d,i)=>tone(i===3?1600:1200,d,i===3?.6:.15)),
+};
+function say(text){if(!$('optVoice').checked)return;try{const u=new SpeechSynthesisUtterance(text);u.lang='ja-JP';u.rate=1.1;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
+
+/* run */
+const R={seq:[],i:0,end:0,left:0,paused:false,lastSec:null,half:false,raf:null};
+let wake=null;
+async function lock(){try{if('wakeLock' in navigator)wake=await navigator.wakeLock.request('screen')}catch(e){}}
+function unlock(){try{wake&&wake.release()}catch(e){}wake=null}
+const NAMES={prep:'準備',work:'ワーク',rest:'休憩',setrest:'セット間休憩'};
+
+function enter(i){
+  R.i=i;const s=R.seq[i];
+  if(!s)return finish();
+  R.left=s.dur*1000;R.end=performance.now()+R.left;R.lastSec=null;R.half=false;
+  const last=s.type==='work'&&s.round===cfg.rounds&&s.set===cfg.sets;
+  if(s.type==='work'){SND.work();say(last?'ラスト！':'スタート')}
+  else if(s.type==='rest'){SND.rest();say('休憩')}
+  else if(s.type==='setrest'){SND.rest();say('セット終了。休憩')}
+  else say('準備');
+  draw();
+}
+function finish(){
+  R.seq=[];$('run').className='done';$('rPhase').textContent='おつかれさま';$('rTime').textContent='✓';
+  $('rNext').textContent='合計 '+mmss(plan().reduce((a,s)=>a+s.dur,0));$('rBar').style.width='100%';
+  $('bPause').textContent='設定に戻る';$('bSkip').disabled=true;SND.done();say('おつかれさまでした');unlock();
+}
+function draw(){
+  const s=R.seq[R.i];if(!s)return;
+  const ms=R.paused?R.left:R.end-performance.now();
+  const sec=Math.ceil(ms/1000);
+  $('run').className=s.type+(R.paused?' paused':'');
+  $('rPhase').textContent=NAMES[s.type];
+  $('rTime').textContent=sec>=60?mmss(sec):sec;
+  $('rRound').innerHTML=`${s.round}<small>/${cfg.rounds}</small>`;
+  $('rSet').innerHTML=`${s.set}<small>/${cfg.sets}</small>`;
+  $('setBox').style.visibility=cfg.sets>1?'visible':'hidden';
+  $('rBar').style.width=(100*(1-ms/(s.dur*1000)))+'%';
+  const n=R.seq[R.i+1];$('rNext').textContent=n?`次：${NAMES[n.type]} ${n.dur<60?n.dur+'秒':mmss(n.dur)}`:'次でおわり';
+  $('bPause').textContent=R.paused?'再開':'一時停止';
+}
+function frame(){
+  if(!R.seq.length||R.paused)return;
+  const s=R.seq[R.i],ms=R.end-performance.now(),sec=Math.ceil(ms/1000);
+  if(ms<=0){enter(R.i+1);if(!R.seq.length)return}
+  else{
+    if(sec!==R.lastSec){R.lastSec=sec;if(sec<=3&&sec>=1)SND.tick()}
+    if($('optHalf').checked&&s.type==='work'&&!R.half&&s.dur>=20&&ms<=s.dur*500){R.half=true;SND.half();say('半分')}
+    draw();
+  }
+  R.raf=requestAnimationFrame(frame);
+}
+function start(){
+  initAudio();R.seq=plan();R.paused=false;
+  $('setup').hidden=true;$('run').hidden=false;$('bSkip').disabled=false;
+  lock();enter(0);cancelAnimationFrame(R.raf);R.raf=requestAnimationFrame(frame);
+}
+function stop(){cancelAnimationFrame(R.raf);R.seq=[];unlock();try{speechSynthesis.cancel()}catch(e){}$('run').hidden=true;$('setup').hidden=false}
+
+$('go').onclick=start;
+$('bPause').onclick=()=>{
+  initAudio();if(!R.seq.length)return stop();
+  if(R.paused){R.paused=false;R.end=performance.now()+R.left;lock();R.raf=requestAnimationFrame(frame)}
+  else{R.paused=true;R.left=R.end-performance.now();cancelAnimationFrame(R.raf)}
+  draw();
+};
+// 終了は2回タップで確定（誤タップ防止）
+let stopArm=null;
+$('bStop').onclick=()=>{if(stopArm||!R.seq.length){clearTimeout(stopArm);stopArm=null;$('bStop').textContent='終了';return stop()}
+  $('bStop').textContent='もう一度';stopArm=setTimeout(()=>{stopArm=null;$('bStop').textContent='終了'},2000)};
+$('bSkip').onclick=()=>{if(!R.seq.length)return;const wasPaused=R.paused;R.paused=false;enter(R.i+1);if(wasPaused&&R.seq.length){R.paused=true;R.left=R.end-performance.now();draw()}};
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&R.seq.length&&!R.paused){lock();cancelAnimationFrame(R.raf);R.raf=requestAnimationFrame(frame)}});
+
+buildSetup();
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}
+</script>
+
+</body>
+</html>
