@@ -19,16 +19,16 @@
 :root{
   padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
   --bg:#eef1ec; --surface:#ffffff; --ink:#18221d; --muted:#61706a; --line:#d3dad5;
-  --work:#1f7a4c; --rest:#2b5ea8; --prep:#c9851b; --setrest:#6b4fa0; --done:#18221d; --on-phase:#ffffff;
+  --work:#1f7a4c; --rest:#2b5ea8; --prep:#c9851b; --setrest:#6b4fa0; --done:#18221d; --on-phase:#ffffff; --alarm:#0e7c8b; --ring:#c8402d;
   --f-body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
   --f-num:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#121815; --surface:#1b2420; --ink:#e7ede9; --muted:#95a49d; --line:#2c3833;
-  --work:#1e8a55; --rest:#2f66b6; --prep:#c98a22; --setrest:#7458ad; --done:#0c110f; color-scheme:dark}}
+  --work:#1e8a55; --rest:#2f66b6; --prep:#c98a22; --setrest:#7458ad; --done:#0c110f; --alarm:#138a9b; --ring:#d24b36; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#121815; --surface:#1b2420; --ink:#e7ede9; --muted:#95a49d; --line:#2c3833;
-  --work:#1e8a55; --rest:#2f66b6; --prep:#c98a22; --setrest:#7458ad; --done:#0c110f; color-scheme:dark}
+  --work:#1e8a55; --rest:#2f66b6; --prep:#c98a22; --setrest:#7458ad; --done:#0c110f; --alarm:#138a9b; --ring:#d24b36; color-scheme:dark}
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0}
 [hidden]{display:none!important}
@@ -69,6 +69,21 @@ h1{font:900 22px var(--f-body);margin:0;letter-spacing:.02em}
 .sounds button{font:500 14px var(--f-body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 0;cursor:pointer}
 .sounds button[aria-checked="true"]{background:var(--work);border-color:var(--work);color:#fff}
 .try{align-self:flex-start;font:500 14px var(--f-body);color:var(--work);background:none;border:1px solid var(--work);border-radius:999px;padding:7px 14px;cursor:pointer}
+.mode{display:grid;grid-template-columns:1fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px}
+.mode button{font:700 15px var(--f-body);color:var(--muted);background:none;border:0;border-radius:999px;padding:10px 0;cursor:pointer}
+.mode button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+.pane{display:flex;flex-direction:column;gap:18px}
+.pnote{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;color:var(--muted);margin-top:-8px;padding-inline:4px}
+.pnote button{flex:none;font:500 13px var(--f-body);color:var(--ink);background:none;border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer}
+.almset{display:flex;justify-content:center;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px 8px}
+.almcol{display:flex;flex-direction:column;align-items:center;gap:6px}
+.almcol b{font:700 92px/1 var(--f-num);font-variant-numeric:tabular-nums}
+.almcol span{font-size:12px;color:var(--muted);letter-spacing:.1em}
+.almcol button{width:72px;height:48px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:700 24px var(--f-body);cursor:pointer;-webkit-user-select:none;user-select:none}
+.almcol button:active{transform:scale(.95)}
+.acolon{font:700 72px/1 var(--f-num);color:var(--muted);padding-bottom:22px}
+.go.alm{background:var(--alarm)}
+.go:disabled{opacity:.4}
 .go{font:900 20px var(--f-body);letter-spacing:.1em;color:#fff;background:var(--work);border:0;border-radius:18px;padding:20px 0;cursor:pointer}
 
 /* run */
@@ -76,6 +91,9 @@ h1{font:900 22px var(--f-body);margin:0;letter-spacing:.02em}
   padding-top:calc(16px + env(safe-area-inset-top,0px));padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
   box-sizing:border-box;transition:background-color .25s}
+#run.alarm{background:var(--alarm)} #run.ring{background:var(--ring)} #run.ring .big{animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:.25}}
+.big.long{font-size:clamp(100px,30vw,230px)}
 #run.work{background:var(--work)} #run.rest{background:var(--rest)} #run.setrest{background:var(--setrest)} #run.done{background:var(--done)}
 .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 .counter{display:flex;flex-direction:column;gap:2px}
@@ -92,7 +110,7 @@ h1{font:900 22px var(--f-body);margin:0;letter-spacing:.02em}
 .rbtns button{font:700 16px var(--f-body);border-radius:16px;padding:18px 0;cursor:pointer;border:2px solid rgba(255,255,255,.55);background:transparent;color:#fff}
 .rbtns button.main{background:#fff;color:var(--ink);border-color:#fff;font-size:18px}
 #run.paused .big{opacity:.45}
-@media (prefers-reduced-motion:reduce){#run{transition:none}}
+@media (prefers-reduced-motion:reduce){#run{transition:none}#run.ring .big{animation:none}}
 </style>
 </head>
 <body>
@@ -100,7 +118,13 @@ h1{font:900 22px var(--f-body);margin:0;letter-spacing:.02em}
 
 <section id="setup">
   <h1>バドミントン練習タイマー</h1>
+  <div class="mode" role="tablist">
+    <button role="tab" id="mInt" aria-selected="true">インターバル</button>
+    <button role="tab" id="mAlm" aria-selected="false">アラーム</button>
+  </div>
+  <div class="pane" id="paneInt">
   <div class="presets" id="presets"></div>
+  <div class="pnote" id="pNote" hidden><span id="pNoteTxt"></span><button type="button" id="pReset">初期値に戻す</button></div>
   <div class="list" id="list"></div>
   <div class="opts">
     <div class="opt sndrow">
@@ -113,10 +137,27 @@ h1{font:900 22px var(--f-body);margin:0;letter-spacing:.02em}
   </div>
   <div class="total"><span>合計時間</span><b id="total">0:00</b></div>
   <button class="go" id="go">スタート</button>
+  </div>
+  <div class="pane" id="paneAlm" hidden>
+    <div class="almset">
+      <div class="almcol"><button type="button" data-u="m" data-d="1" aria-label="分を増やす">＋</button><b id="aMin">03</b><span>分</span><button type="button" data-u="m" data-d="-1" aria-label="分を減らす">−</button></div>
+      <span class="acolon">:</span>
+      <div class="almcol"><button type="button" data-u="s" data-d="1" aria-label="秒を増やす">＋</button><b id="aSec">00</b><span>秒</span><button type="button" data-u="s" data-d="-1" aria-label="秒を減らす">−</button></div>
+    </div>
+    <div class="presets" id="aPresets"></div>
+    <div class="opts">
+      <div class="opt sndrow">
+        <span>アラームの音</span>
+        <div class="sounds" id="aSounds" role="radiogroup" aria-label="アラームの音"></div>
+        <button class="try" id="aTry" type="button">▶ 試し聞き</button>
+      </div>
+    </div>
+    <button class="go alm" id="aGo">スタート</button>
+  </div>
 </section>
 
 <section id="run" hidden>
-  <div class="top">
+  <div class="top" id="rTop">
     <div class="counter"><span>ROUND</span><b id="rRound">1<small>/8</small></b></div>
     <div class="counter" id="setBox" style="text-align:right"><span>SET</span><b id="rSet">1<small>/1</small></b></div>
   </div>
@@ -152,14 +193,20 @@ const PRESETS=[
   {name:'シャトルラン',v:{prep:10,work:40,rest:20,rounds:6,sets:3,setRest:90}},
   {name:'ゲーム形式',v:{prep:10,work:300,rest:60,rounds:4,sets:1,setRest:60}},
 ];
-let cfg=Object.assign({},PRESETS[0].v,store.get('bt.cfg')||{});
+// プリセットごとに最後の設定を記憶
+let pst=store.get('bt.presets');
+if(!pst||typeof pst.sel!=='number'||!PRESETS[pst.sel]){pst={sel:0,custom:{}};const old=store.get('bt.cfg');
+  if(old){const i=PRESETS.findIndex(p=>FIELDS.every(f=>p.v[f.k]===old[f.k]));if(i>=0)pst.sel=i;else pst.custom[0]=old}}
+pst.custom=pst.custom||{};
+const valsOf=i=>Object.assign({},PRESETS[i].v,pst.custom[i]||{});
+let cfg=valsOf(pst.sel);
 
 const mmss=s=>{s=Math.max(0,Math.round(s));const m=Math.floor(s/60);return m+':'+String(s%60).padStart(2,'0')};
 const fmtVal=(f,v)=>f.time?(v<60?v+'秒':mmss(v)):v+(f.k==='rounds'?'回':'セット');
 
 function buildSetup(){
   $('presets').innerHTML=PRESETS.map((p,i)=>`<button data-i="${i}">${p.name}</button>`).join('');
-  $('presets').querySelectorAll('button').forEach(b=>b.onclick=()=>{cfg=Object.assign({},PRESETS[b.dataset.i].v);save()});
+  $('presets').querySelectorAll('button').forEach(b=>b.onclick=()=>{pst.sel=+b.dataset.i;cfg=valsOf(pst.sel);save()});
   $('list').innerHTML=FIELDS.map(f=>`<div class="item" id="it-${f.k}">
     <span class="dot" style="background:var(${f.color})"></span>
     <div class="lbl"><b>${f.name}</b><small>${f.sub}</small></div>
@@ -180,13 +227,17 @@ function buildSetup(){
   $('sounds').querySelectorAll('button').forEach(b=>b.onclick=()=>{soundKey=b.dataset.k;mark();saveOpts();initAudio();SOUNDS[soundKey].work()});
   $('trySnd').onclick=()=>{initAudio();const S=SOUNDS[soundKey];S.work();setTimeout(()=>S.rest(),1400)};
   mark();
+  $('pReset').onclick=()=>{cfg=Object.assign({},PRESETS[pst.sel].v);save()};
   save();
 }
 function save(){
-  store.set('bt.cfg',cfg);
+  const def=PRESETS[pst.sel].v,same=FIELDS.every(f=>def[f.k]===cfg[f.k]);
+  if(same)delete pst.custom[pst.sel];else pst.custom[pst.sel]=Object.assign({},cfg);
+  store.set('bt.presets',pst);
+  $('pNote').hidden=same;$('pNoteTxt').textContent=`「${PRESETS[pst.sel].name}」は変更した設定を記憶中`;
   FIELDS.forEach(f=>$('v-'+f.k).textContent=fmtVal(f,cfg[f.k]));
   $('it-setRest').style.opacity=cfg.sets>1?1:.4;
-  $('presets').querySelectorAll('button').forEach((b,i)=>b.classList.toggle('on',FIELDS.every(f=>PRESETS[i].v[f.k]===cfg[f.k])));
+  $('presets').querySelectorAll('button').forEach((b,i)=>b.classList.toggle('on',i===pst.sel));
   $('total').textContent=mmss(plan().reduce((a,s)=>a+s.dur,0));
 }
 function plan(){
@@ -225,23 +276,23 @@ function noise(){if(!noiseBuf){noiseBuf=ac.createBuffer(1,ac.sampleRate,ac.sampl
   const n=ac.createBufferSource();n.buffer=noiseBuf;n.loop=true;return n}
 // 笛（ホイッスル）：高い音を細かく揺らして、息の音を混ぜる
 function whistle(d,len){if(!ac)return;const t=ac.currentTime+d,g=env(t,len,.75,.02,.05);
-  const lfo=ac.createOscillator(),lg=ac.createGain();lfo.frequency.value=34;lg.gain.value=160;lfo.connect(lg);
-  [2950,3080].forEach(f=>{const o=ac.createOscillator();o.type='sine';o.frequency.value=f;lg.connect(o.frequency);o.connect(g);o.start(t);o.stop(t+len+.05)});
-  const n=noise(),bp=ac.createBiquadFilter(),ng=ac.createGain();bp.type='bandpass';bp.frequency.value=3000;bp.Q.value=3;ng.gain.value=.35;n.connect(bp).connect(ng).connect(g);n.start(t);n.stop(t+len+.05);
+  const lfo=ac.createOscillator(),lg=ac.createGain();lfo.frequency.value=42;lg.gain.value=230;lfo.connect(lg);
+  [3500,3660].forEach(f=>{const o=ac.createOscillator();o.type='sine';o.frequency.value=f;lg.connect(o.frequency);o.connect(g);o.start(t);o.stop(t+len+.05)});
+  const n=noise(),bp=ac.createBiquadFilter(),ng=ac.createGain();bp.type='bandpass';bp.frequency.value=3600;bp.Q.value=2.5;ng.gain.value=.3;n.connect(bp).connect(ng).connect(g);n.start(t);n.stop(t+len+.05);
   lfo.start(t);lfo.stop(t+len+.05)}
-// ブザー：試合会場のような太い音
-function buzzer(d,len){if(!ac)return;const t=ac.currentTime+d,g=env(t,len,.45,.005,.03);
-  [[220,'sawtooth'],[223,'square'],[440,'sawtooth']].forEach(([f,ty])=>{const o=ac.createOscillator();o.type=ty;o.frequency.value=f;o.connect(g);o.start(t);o.stop(t+len+.05)})}
+// ブザー：会場のブザーを高めに（明るめ）
+function buzzer(d,len){if(!ac)return;const t=ac.currentTime+d,g=env(t,len,.32,.005,.03);
+  [[440,'square'],[443,'sawtooth'],[880,'square'],[1320,'sine']].forEach(([f,ty])=>{const o=ac.createOscillator();o.type=ty;o.frequency.value=f;o.connect(g);o.start(t);o.stop(t+len+.05)})}
 // ゴング：ボクシングのベルのような金属音
 function bell(d){if(!ac)return;const t=ac.currentTime+d;
-  [[1,.5,2.2],[2.76,.32,1.4],[5.4,.22,.9],[8.93,.12,.5]].forEach(([r,v,dec])=>{const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.value=780*r;
+  [[1,.5,2.2],[2.76,.32,1.4],[5.4,.22,.9],[8.93,.12,.5]].forEach(([r,v,dec])=>{const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.value=1250*r;
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.003);g.gain.exponentialRampToValueAtTime(.0005,t+dec);o.connect(g).connect(out);o.start(t);o.stop(t+dec+.05)})}
 // ホーン：応援で使うエアホーン風
-function horn(d,len){if(!ac)return;const t=ac.currentTime+d,g=env(t,len,.5,.02,.06),lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2600;lp.connect(g);
-  [415,523,622].forEach((f,i)=>{const o=ac.createOscillator();o.type='sawtooth';o.frequency.setValueAtTime(f*.94,t);o.frequency.linearRampToValueAtTime(f,t+.06);o.detune.value=(i-1)*6;o.connect(lp);o.start(t);o.stop(t+len+.05)})}
+function horn(d,len){if(!ac)return;const t=ac.currentTime+d,g=env(t,len,.5,.02,.06),lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=5200;lp.connect(g);
+  [523,659,784].forEach((f,i)=>{const o=ac.createOscillator();o.type='sawtooth';o.frequency.setValueAtTime(f*.94,t);o.frequency.linearRampToValueAtTime(f,t+.06);o.detune.value=(i-1)*6;o.connect(lp);o.start(t);o.stop(t+len+.05)})}
 const SOUNDS={
   whistle:{name:'笛',work:()=>whistle(0,.9),rest:()=>{whistle(0,.22);whistle(.32,.22)}},
-  beep:{name:'電子音',work:()=>tone(1500,0,.7,.6),rest:()=>{tone(1200,0,.18,.6);tone(800,.24,.4,.6)}},
+  beep:{name:'電子音',work:()=>tone(2093,0,.7,.55),rest:()=>{tone(1568,0,.16,.55);tone(2093,.22,.3,.55)}},
   buzzer:{name:'ブザー',work:()=>buzzer(0,1),rest:()=>{buzzer(0,.25);buzzer(.35,.25)}},
   bell:{name:'ゴング',work:()=>bell(0),rest:()=>{bell(0);bell(.28);bell(.56)}},
   horn:{name:'ホーン',work:()=>horn(0,1),rest:()=>{horn(0,.28);horn(.4,.28)}},
@@ -249,11 +300,11 @@ const SOUNDS={
 };
 let soundKey='whistle';
 const SND={
-  tick:()=>tone(1000,0,.09,.45),
+  tick:()=>tone(1568,0,.09,.45),
   work:()=>tone(1500,0,.6,.3),
   rest:()=>{tone(1200,0,.15);tone(800,.18,.3)},
-  half:()=>{tone(1300,0,.08,.2);tone(1300,.14,.08,.2)},
-  done:()=>[0,.2,.4,.7].forEach((d,i)=>tone(i===3?1600:1200,d,i===3?.6:.15)),
+  half:()=>{tone(1760,0,.08,.3);tone(1760,.14,.08,.3)},
+  done:()=>[1047,1319,1568,2093].forEach((f,i)=>tone(f,i*.17,i===3?.6:.14,.45)),
 };
 function say(text,force){if(!force&&!$('optVoice').checked)return;try{const u=new SpeechSynthesisUtterance(text);u.lang='ja-JP';u.rate=1.1;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
 
@@ -287,7 +338,7 @@ function draw(){
   const sec=Math.ceil(ms/1000);
   $('run').className=s.type+(R.paused?' paused':'');
   $('rPhase').textContent=NAMES[s.type];
-  $('rTime').textContent=sec>=60?mmss(sec):sec;
+  const txt=sec>=60?mmss(sec):String(sec);$('rTime').textContent=txt;$('rTime').classList.toggle('long',txt.length>=5);
   $('rRound').innerHTML=`${s.round}<small>/${cfg.rounds}</small>`;
   $('rSet').innerHTML=`${s.set}<small>/${cfg.sets}</small>`;
   $('setBox').style.visibility=cfg.sets>1?'visible':'hidden';
@@ -306,28 +357,114 @@ function frame(){
   }
   R.raf=requestAnimationFrame(frame);
 }
+let runMode='interval';
 function start(){
-  initAudio();R.seq=plan();R.paused=false;
-  $('setup').hidden=true;$('run').hidden=false;$('bSkip').disabled=false;
+  initAudio();runMode='interval';R.seq=plan();R.paused=false;
+  $('setup').hidden=true;$('run').hidden=false;$('bSkip').disabled=false;$('bSkip').textContent='次へ ›';$('rTop').style.visibility='visible';$('rTime').classList.remove('long');
   lock();enter(0);cancelAnimationFrame(R.raf);R.raf=requestAnimationFrame(frame);
 }
-function stop(){cancelAnimationFrame(R.raf);R.seq=[];unlock();releaseAudio();try{speechSynthesis.cancel()}catch(e){}$('run').hidden=true;$('setup').hidden=false}
+function stop(){cancelAnimationFrame(R.raf);R.seq=[];alarmHalt();unlock();releaseAudio();try{speechSynthesis.cancel()}catch(e){}$('run').hidden=true;$('setup').hidden=false}
 
 $('go').onclick=start;
 $('bPause').onclick=()=>{
-  initAudio();if(!R.seq.length)return stop();
+  initAudio();if(runMode==='alarm')return alarmPause();if(!R.seq.length)return stop();
   if(R.paused){R.paused=false;R.end=performance.now()+R.left;lock();R.raf=requestAnimationFrame(frame)}
   else{R.paused=true;R.left=R.end-performance.now();cancelAnimationFrame(R.raf)}
   draw();
 };
 // 終了は2回タップで確定（誤タップ防止）
 let stopArm=null;
-$('bStop').onclick=()=>{if(stopArm||!R.seq.length){clearTimeout(stopArm);stopArm=null;$('bStop').textContent='終了';return stop()}
+$('bStop').onclick=()=>{const live=runMode==='alarm'?!A.ringing:R.seq.length;if(stopArm||!live){clearTimeout(stopArm);stopArm=null;$('bStop').textContent='終了';return stop()}
   $('bStop').textContent='もう一度';stopArm=setTimeout(()=>{stopArm=null;$('bStop').textContent='終了'},2000)};
-$('bSkip').onclick=()=>{if(!R.seq.length)return;const wasPaused=R.paused;R.paused=false;enter(R.i+1);if(wasPaused&&R.seq.length){R.paused=true;R.left=R.end-performance.now();draw()}};
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&R.seq.length&&!R.paused){lock();cancelAnimationFrame(R.raf);R.raf=requestAnimationFrame(frame)}});
+$('bSkip').onclick=()=>{if(runMode==='alarm')return alarmPlus();if(!R.seq.length)return;const wasPaused=R.paused;R.paused=false;enter(R.i+1);if(wasPaused&&R.seq.length){R.paused=true;R.left=R.end-performance.now();draw()}};
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState!=='visible')return;
+  if(runMode==='interval'&&R.seq.length&&!R.paused){lock();cancelAnimationFrame(R.raf);R.raf=requestAnimationFrame(frame)}
+  if(runMode==='alarm'&&A.on&&!A.paused&&!A.ringing){lock();cancelAnimationFrame(A.raf);A.raf=requestAnimationFrame(aFrame)}});
 
-buildSetup();
+/* ===== アラーム（ふつうのタイマー） ===== */
+const A={on:false,total:0,end:0,left:0,paused:false,ringing:false,raf:null,ringT:null,stopT:null};
+const ALM_SOUNDS=Object.keys(SOUNDS).filter(k=>k!=='voice');
+let aCfg=Object.assign({sec:180,sound:'beep'},store.get('bt.alarm')||{});
+if(!ALM_SOUNDS.includes(aCfg.sound))aCfg.sound='beep';
+const pad=n=>String(n).padStart(2,'0');
+const A_PRESETS=[60,180,300,600,900,1800];
+function aSave(){
+  store.set('bt.alarm',aCfg);
+  $('aMin').textContent=pad(Math.floor(aCfg.sec/60));$('aSec').textContent=pad(aCfg.sec%60);
+  $('aPresets').querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.s===aCfg.sec));
+  $('aSounds').querySelectorAll('button').forEach(b=>b.setAttribute('aria-checked',b.dataset.k===aCfg.sound));
+  $('aGo').disabled=aCfg.sec<=0;
+}
+function aStep(u,d){
+  let m=Math.floor(aCfg.sec/60),s=aCfg.sec%60;
+  if(u==='m')m=Math.max(0,Math.min(99,m+d));else{s+=d*5;if(s>=60){s=0;m=Math.min(99,m+1)}if(s<0){if(m>0){m--;s=55}else s=0}}
+  aCfg.sec=m*60+s;aSave();
+}
+function buildAlarm(){
+  $('aPresets').innerHTML=A_PRESETS.map(v=>`<button type="button" data-s="${v}">${v/60}分</button>`).join('');
+  $('aPresets').querySelectorAll('button').forEach(b=>b.onclick=()=>{aCfg.sec=+b.dataset.s;aSave()});
+  $('aSounds').innerHTML=ALM_SOUNDS.map(k=>`<button type="button" role="radio" data-k="${k}">${SOUNDS[k].name}</button>`).join('');
+  $('aSounds').querySelectorAll('button').forEach(b=>b.onclick=()=>{aCfg.sound=b.dataset.k;aSave();initAudio();SOUNDS[aCfg.sound].work()});
+  $('aTry').onclick=()=>{initAudio();ringOnce()};
+  document.querySelectorAll('.almcol button').forEach(b=>{
+    let t1,t2;const once=()=>aStep(b.dataset.u,+b.dataset.d);
+    b.addEventListener('pointerdown',e=>{e.preventDefault();once();t1=setTimeout(function r(){once();t2=setTimeout(r,90)},400)});
+    ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>{clearTimeout(t1);clearTimeout(t2)}));
+    b.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();once()}});
+  });
+  $('aGo').onclick=alarmStart;
+  aSave();
+}
+function ringOnce(){const S=SOUNDS[aCfg.sound];S.work();if(aCfg.sound!=='bell')setTimeout(()=>S.work(),aCfg.sound==='whistle'?1100:1200)}
+function alarmStart(){
+  initAudio();runMode='alarm';
+  A.on=true;A.total=aCfg.sec*1000;A.left=A.total;A.end=performance.now()+A.left;A.paused=false;A.ringing=false;
+  $('setup').hidden=true;$('run').hidden=false;$('rTop').style.visibility='hidden';
+  $('bSkip').disabled=false;$('bSkip').textContent='＋1分';$('bStop').textContent='終了';
+  lock();aDraw();cancelAnimationFrame(A.raf);A.raf=requestAnimationFrame(aFrame);
+}
+function aDraw(){
+  const ms=A.paused?A.left:A.end-performance.now();
+  $('run').className='alarm'+(A.paused?' paused':'');
+  $('rPhase').textContent='アラーム';
+  const txt=mmss(Math.ceil(ms/1000));$('rTime').textContent=txt;$('rTime').classList.toggle('long',txt.length>=5);
+  $('rBar').style.width=(100*(1-ms/A.total))+'%';
+  $('rNext').textContent=A.paused?'一時停止中':'鳴る時刻 '+new Date(Date.now()+ms).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
+  $('bPause').textContent=A.paused?'再開':'一時停止';
+}
+function aFrame(){
+  if(!A.on||A.paused||A.ringing)return;
+  if(A.end-performance.now()<=0)return alarmRing();
+  aDraw();A.raf=requestAnimationFrame(aFrame);
+}
+function alarmRing(){
+  A.ringing=true;$('run').className='ring';$('rPhase').textContent='時間です';$('rTime').textContent='0:00';$('rTime').classList.remove('long');
+  $('rBar').style.width='100%';$('rNext').textContent='「止める」で止まります';$('bPause').textContent='止める';
+  ringOnce();A.ringT=setInterval(ringOnce,aCfg.sound==='bell'?2200:2600);
+  try{navigator.vibrate&&navigator.vibrate([500,250,500,250,500])}catch(e){}
+  A.stopT=setTimeout(()=>{if(A.ringing){clearInterval(A.ringT);$('rNext').textContent='3分たったので音を止めました'}},180000);
+}
+function alarmHalt(){A.on=false;A.ringing=false;cancelAnimationFrame(A.raf);clearInterval(A.ringT);clearTimeout(A.stopT);try{navigator.vibrate&&navigator.vibrate(0)}catch(e){}}
+function alarmPause(){
+  if(A.ringing||!A.on)return stop();
+  if(A.paused){A.paused=false;A.end=performance.now()+A.left;lock();A.raf=requestAnimationFrame(aFrame)}
+  else{A.paused=true;A.left=A.end-performance.now();cancelAnimationFrame(A.raf)}
+  aDraw();
+}
+function alarmPlus(){
+  initAudio();
+  if(A.ringing){clearInterval(A.ringT);clearTimeout(A.stopT);A.ringing=false;A.total=60000;A.left=60000;A.end=performance.now()+60000;A.paused=false;lock();aDraw();A.raf=requestAnimationFrame(aFrame);return}
+  A.total+=60000;if(A.paused)A.left+=60000;else A.end+=60000;aDraw();
+}
+
+/* モード切り替え */
+function setMode(m){
+  $('mInt').setAttribute('aria-selected',m==='interval');$('mAlm').setAttribute('aria-selected',m==='alarm');
+  $('paneInt').hidden=m!=='interval';$('paneAlm').hidden=m!=='alarm';store.set('bt.mode',m);
+}
+$('mInt').onclick=()=>setMode('interval');$('mAlm').onclick=()=>setMode('alarm');
+
+buildSetup();buildAlarm();setMode(store.get('bt.mode')==='alarm'?'alarm':'interval');
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}
 </script>
 
